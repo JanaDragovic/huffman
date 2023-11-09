@@ -6,7 +6,7 @@ First, the main request of the program has been fulfilled in *huffman_algorithm.
 
 Next, the algorithm in *huffman_algorithm.py* is compared to the *huffman_for_text.py* implementation that uses the ASCII symbols and calculates their probability in the string, in purpose of checking does the algorithm works equally accurate while given the probabilites as an input and while it calculates it by itself. 
 
-Then, the performance of the algorithm is evaluated by comparing large files and simple text encoding comparing how algorithm performs on the large files versus smaller amount of data.
+Then, the performance of the algorithm is evaluated by comparing large files and simple text encoding comparing how algorithm performs on the large files versus smaller amount of data. Additionally, the Huffman algorithm's efficiency is compared based on the three different random files that have only lower-case letters, lower-case and upper-case letters combined and file with combined letters and digits. 
 
 In the end, there is a comparison of the performace of the Huffman encoding on text versus jpeg files. 
 
