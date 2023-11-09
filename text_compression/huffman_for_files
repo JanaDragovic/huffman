@@ -196,7 +196,7 @@ def calculate_entropy_huffman_coding(huffman_coding_instance):
 
     return entropy
 
-huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\sample.txt")
+huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\text_compression\\TheLittlePrince.txt")
 entropy = calculate_entropy_huffman_coding(huffman_instance)
 print("Entropy of the Huffman encoding:", entropy)
 
@@ -205,7 +205,7 @@ def calculate_compression_efficiency(original_size, compressed_size):
     return efficiency
 
 # Assuming you have a HuffmanCoding instance named huffman_instance
-huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\sample.txt")
+huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\text_compression\\TheLittlePrince.txt")
 original_size = os.path.getsize(huffman_instance.path) * 8  # Original size in bits
 compressed_size = os.path.getsize(huffman_instance.compress()) * 8  # Compressed size in bits
 
