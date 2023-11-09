@@ -83,7 +83,7 @@ print()
 letter_binary = []
 if len(only_letters) == 1:
     lettercode = [only_letters[0], "0"]
-    letter_binary.append(letter_code*len(my_string))
+    letter_binary.append(lettercode*len(my_string))
 else:
     for letter in only_letters:
         code =""
