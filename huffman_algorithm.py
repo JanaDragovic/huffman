@@ -83,6 +83,6 @@ def calculate_efficiency(huffman_codes, verovatnoce):
     return efficiency
 
 # Add this to your main block to use the function
-efficiency = calculate_efficiency(huffman_codes, verovatnoce)
-print(f"Efikasnost kompresije: {efficiency}")
+#efficiency = calculate_efficiency(huffman_coding, verovatnoce)
+#print(f"Efikasnost kompresije: {efficiency}")
 
