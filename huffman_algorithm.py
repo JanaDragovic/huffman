@@ -1,88 +1,95 @@
-import heapq
-from collections import defaultdict
 import math
+import sys
 
-# definisanje klase Node koja predstavlja cvor u stablu
-class Node:
-    def __init__(self, simbol, verovatnoca):
+# funkcija za unos simbola i njihovih verovatnoca
+# simboli i kodovi se cuvaju kao recnici u formatu { 'simbol': verovatnoca }
 
-        #uneti simbol
-        self.simbol = simbol
-        self.verovatnoca = verovatnoca
-        self.left = None
-        self.right = None
 
-    def __lt__(self, other):
-        return self.verovatnoca < other.verovatnoca
+# funkcija za unos simbola i njihove gustine raspodele verovatnoce 
+def unos_gustine_raspodele_verovatnoce():
+    raspodela = {}
+    n = int(input("Unesite broj simbola: "))
+
+    for i in range(1, n + 1):
+        simbol = input(f"Unesite simbol {i}: ")
+        verovatnoca = float(input(f"Unesite verovatnocu pojavljivanja simbola {simbol}: "))
+        raspodela[simbol] = verovatnoca
+
+# provera da li je zadovoljen uslov da je ukupna verovatnoca jednaka 1
+    ukupna_verovatnoca = sum(raspodela.values())
+    if ukupna_verovatnoca != 1.0:
+        print("Verovatnoce nisu jednake 1")
+        sys.exit()
+    return raspodela
+
+
+
+def hafmen(p):
+
+    # proveravamo da li su uneta samo dva simbola
+    # ako jesu, proizvoljno im dajemo vrednosti 0 i 1
+    if len(p) == 2:
+        return dict(zip(p.keys(), ['0', '1']))
+
+    # Spajamo dva simbola sa najnizim verovatnocama pojavljivanja
+    p_prim = p.copy()
+    a1, a2 = lowest_prob_pair(p)
+    p1, p2 = p_prim.pop(a1), p_prim.pop(a2)
+    p_prim[a1 + a2] = p1 + p2
+
+    # rekurzivno pozivamo funkciju i vrsimo kodiranje na osnovu 
+    # nove gustine raspodele funkcije verovatnoce 
     
+    c = hafmen(p_prim)
+    ca1a2 = c.pop(a1 + a2)
+    c[a1], c[a2] = ca1a2 + '0', ca1a2 + '1'
 
-# funkcija koja simbolima dodeljuje unesene verovatnoce
-def huffman_coding(verovatnoce):
-    heap = [Node(simbol, verovatnoca) for simbol, verovatnoca in verovatnoce.items()]
-    heapq.heapify(heap)
+    return c
 
-    while len(heap) > 1:
-        left = heapq.heappop(heap)
-        right = heapq.heappop(heap)
-        merged = Node(None, left.verovatnoca + right.verovatnoca)
-        merged.left = left
-        merged.right = right
-        heapq.heappush(heap, merged)
+# funkcija koja vraca par simbola sa najnizim verovatnocama 
+def lowest_prob_pair(p):
+    # u recniku moraju postojati minimum dva simbola
+    assert len(p) >= 2  
 
-    root = heap[0]
-    codes = {}
-    generisanje_Hafmenovih_kodova(root, "", codes)
+    sortirani_p = sorted(p.items(), key=lambda x: x[1])
+    return sortirani_p[0][0], sortirani_p[1][0]
 
-    return codes
+# trazimo unos od korisnika
+unos = unos_gustine_raspodele_verovatnoce()
 
-# funkcija koja rekurzivno prolazi kroz stablo i simbolima dodeljuje kodove
-def generisanje_Hafmenovih_kodova(node, code, codes):
-    if node.simbol:
-        codes[node.simbol] = code
-    if node.left:
-        generisanje_Hafmenovih_kodova(node.left, code + "0", codes)
-    if node.right:
-        generisanje_Hafmenovih_kodova(node.right, code + "1", codes)
-
-# entropija
-def racunanje_entropije(verovatnoce):
-    entropy = -sum(verovatnoca * (1 if verovatnoca > 0 else 0) * (math.log(verovatnoca, 2) if verovatnoca > 0 else 0) for verovatnoca in verovatnoce.values())
-    return entropy
+# Funkcija za odredjivanje da li su kodovi prefiksi jedni drugih
+def prefix(code1, code2):
+    return code1.startswith(code2) or code2.startswith(code1)
 
 
-# provera uslova i izvrsavanje koda
-if __name__ == '__main__':
-    verovatnoce = {}
-    sum_of_verovatnoce = 0
+# Racunanje entropije
+def racunanje_entropije(raspodela_verovatnoce):
+    entropija = 0.0
 
-    while True:
-        simbol = input("Unesite simbol ili 'kraj' kako biste zavrsili unos): ")
-        if simbol == 'kraj':
-            break
-        verovatnoca = float(input("Unesite verovatnocu simbola: "))
-        verovatnoce[simbol] = verovatnoca
-        sum_of_verovatnoce += verovatnoca
+    for verovatnoca in raspodela_verovatnoce.values():
+        entropija -= verovatnoca * (math.log(verovatnoca,2) if verovatnoca > 0 else 0)
 
-    if sum_of_verovatnoce != 1:
-        print("Greska! Zbir unesenih verovatnoca nije jednak 1.")
-    else:
-        huffman_codes = huffman_coding(verovatnoce)
-        print("Hafmenov kod:")
-        for simbol, code in huffman_codes.items():
-            print(f"{simbol}: {code}")
+    return entropija
 
-        check_valid = all(code not in code for code in huffman_codes.values())
-        print(f"Kod je trenutan: {check_valid}")
 
-        entropy = racunanje_entropije(verovatnoce)
-        print(f"Entropija: {entropy}")
+# Hafmenov kod 
+hafmenov_kod = hafmen(unos)
+print("Hafmenov kod:", hafmenov_kod)
 
-def calculate_efficiency(huffman_codes, verovatnoce):
-    average_code_length = sum(len(code) * verovatnoce[simbol] for simbol, code in huffman_codes.items())
-    efficiency = entropy / average_code_length
-    return efficiency
+# Entropija
+entropija = racunanje_entropije(unos)
+print("Entropija:", entropija)
 
-# Add this to your main block to use the function
-#efficiency = calculate_efficiency(huffman_coding, verovatnoce)
-#print(f"Efikasnost kompresije: {efficiency}")
+
+# provera da li je kod trenutan prolazenjem kroz izlazni recnik
+# provera se vrsi tako sto se ispituje da li su neki od kodova u prefiksnoj vezi
+
+simboli = list(hafmenov_kod.keys())
+for i in range(len(simboli)):
+    for j in range(i + 1, len(simboli)):
+        simbol_i, simbol_j = simboli[i], simboli[j]
+        if prefix(hafmenov_kod[simbol_i], hafmenov_kod[simbol_j]) or prefix(hafmenov_kod[simbol_j], hafmenov_kod[simbol_i]):
+            print(f"Generisani Hafmenov kodovi {hafmenov_kod[simbol_i]} i {hafmenov_kod[simbol_j]} su prefiksi jedni drugih.")
+        
+print("Kod je trenutan")
 
