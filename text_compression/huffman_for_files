@@ -1,14 +1,14 @@
 import heapq
 import os
+import math
 
-
-class HuffmanCoding:
+# klasa koja stvara Hafmenovo stablo
+class HafmenovAlgoritam:
 	def __init__(self, path):
 		self.path = path
 		self.heap = []
 		self.codes = {}
 		self.reverse_mapping = {}
-
 	class HeapNode:
 		def __init__(self, char, freq):
 			self.char = char
@@ -16,7 +16,6 @@ class HuffmanCoding:
 			self.left = None
 			self.right = None
 
-		# defining comparators less_than and equals
 		def __lt__(self, other):
 			return self.freq < other.freq
 
@@ -27,19 +26,22 @@ class HuffmanCoding:
 				return False
 			return self.freq == other.freq
 
-	# functions for compression:
+	# funkcije za vršenje kompresije
 
-	def make_frequency_dict(self, text):
-		frequency = {}
+	# prebrojavanje karaktera u tekstu
+	
+	def recnik_frekvencija(self, text):
+		frekvencija = {}
 		for character in text:
-			if not character in frequency:
-				frequency[character] = 0
-			frequency[character] += 1
-		return frequency
+			if not character in frekvencija:
+				frekvencija[character] = 0
+			frekvencija[character] += 1
+		return frekvencija
 
-	def make_heap(self, frequency):
-		for key in frequency:
-			node = self.HeapNode(key, frequency[key])
+
+	def make_heap(self, frekvencija):
+		for key in frekvencija:
+			node = self.HeapNode(key, frekvencija[key])
 			heapq.heappush(self.heap, node)
 
 	def merge_nodes(self):
@@ -53,8 +55,9 @@ class HuffmanCoding:
 
 			heapq.heappush(self.heap, merged)
 
+	# kodiranje teksta
 
-	def make_codes_helper(self, root, current_code):
+	def kodiranje_pomocno(self, root, current_code):
 		if(root == None):
 			return
 
@@ -63,46 +66,47 @@ class HuffmanCoding:
 			self.reverse_mapping[current_code] = root.char
 			return
 
-		self.make_codes_helper(root.left, current_code + "0")
-		self.make_codes_helper(root.right, current_code + "1")
+		self.kodiranje_pomocno(root.left, current_code + "0")
+		self.kodiranje_pomocno(root.right, current_code + "1")
 
 
-	def make_codes(self):
+	def kodiranje(self):
 		root = heapq.heappop(self.heap)
 		current_code = ""
-		self.make_codes_helper(root, current_code)
+		self.kodiranje_pomocno(root, current_code)
 
 
-	def get_encoded_text(self, text):
-		encoded_text = ""
+	def get_enkodovani_tekst(self, text):
+		enkodovani_tekst = ""
 		for character in text:
-			encoded_text += self.codes[character]
-		return encoded_text
+			enkodovani_tekst += self.codes[character]
+		return enkodovani_tekst
 
 
-	def pad_encoded_text(self, encoded_text):
-		extra_padding = 8 - len(encoded_text) % 8
+	def pad_enkodovani_tekst(self, enkodovani_tekst):
+		extra_padding = 8 - len(enkodovani_tekst) % 8
 		for i in range(extra_padding):
-			encoded_text += "0"
+			enkodovani_tekst += "0"
 
 		padded_info = "{0:08b}".format(extra_padding)
-		encoded_text = padded_info + encoded_text
-		return encoded_text
+		enkodovani_tekst = padded_info + enkodovani_tekst
+		return enkodovani_tekst
 
 
-	def get_byte_array(self, padded_encoded_text):
-		if(len(padded_encoded_text) % 8 != 0):
-			print("Encoded text not padded properly")
+	def get_niz_bajtova(self, padded_enkodovani_tekst):
+		if(len(padded_enkodovani_tekst) % 8 != 0):
+			print("Dati tekst se ne moze enkodovati")
 			exit(0)
 
 		b = bytearray()
-		for i in range(0, len(padded_encoded_text), 8):
-			byte = padded_encoded_text[i:i+8]
+		for i in range(0, len(padded_enkodovani_tekst), 8):
+			byte = padded_enkodovani_tekst[i:i+8]
 			b.append(int(byte, 2))
 		return b
 
+	# kompresija teksta
 
-	def compress(self):
+	def kompresija(self):
 		filename, file_extension = os.path.splitext(self.path)
 		output_path = filename + ".bin"
 
@@ -110,106 +114,61 @@ class HuffmanCoding:
 			text = file.read()
 			text = text.rstrip()
 
-			frequency = self.make_frequency_dict(text)
-			self.make_heap(frequency)
+			frekvencija = self.recnik_frekvencija(text)
+			self.make_heap(frekvencija)
 			self.merge_nodes()
-			self.make_codes()
+			self.kodiranje()
 
-			encoded_text = self.get_encoded_text(text)
-			padded_encoded_text = self.pad_encoded_text(encoded_text)
+			enkodovani_tekst = self.get_enkodovani_tekst(text)
+			padded_enkodovani_tekst = self.pad_enkodovani_tekst(enkodovani_tekst)
 
-			b = self.get_byte_array(padded_encoded_text)
+			b = self.get_niz_bajtova(padded_enkodovani_tekst)
 			output.write(bytes(b))
 
-		print("Compressed")
+		print("Fajl je kompresovan")
 		return output_path
 
+# funkcija za racunanje entropije
 
-	""" functions for decompression: """
-
-
-	def remove_padding(self, padded_encoded_text):
-		padded_info = padded_encoded_text[:8]
-		extra_padding = int(padded_info, 2)
-
-		padded_encoded_text = padded_encoded_text[8:] 
-		encoded_text = padded_encoded_text[:-1*extra_padding]
-
-		return encoded_text
-
-	def decode_text(self, encoded_text):
-		current_code = ""
-		decoded_text = ""
-
-		for bit in encoded_text:
-			current_code += bit
-			if(current_code in self.reverse_mapping):
-				character = self.reverse_mapping[current_code]
-				decoded_text += character
-				current_code = ""
-
-		return decoded_text
-
-
-	def decompress(self, input_path):
-		filename, file_extension = os.path.splitext(self.path)
-		output_path = filename + "_decompressed" + ".txt"
-
-		with open(input_path, 'rb') as file, open(output_path, 'w') as output:
-			bit_string = ""
-
-			byte = file.read(1)
-			while(len(byte) > 0):
-				byte = ord(byte)
-				bits = bin(byte)[2:].rjust(8, '0')
-				bit_string += bits
-				byte = file.read(1)
-
-			encoded_text = self.remove_padding(bit_string)
-
-			decompressed_text = self.decode_text(encoded_text)
-			
-			output.write(decompressed_text)
-
-		print("Decompressed")
-		return output_path
-	
-import math
-
-def calculate_entropy_huffman_coding(huffman_coding_instance):
-    encoded_text = ""
+def racunanje_entropije(huffman_coding_instance):
+    enkodovani_tekst = ""
     with open(huffman_coding_instance.path, 'r') as file:
         text = file.read()
-        frequency = huffman_coding_instance.make_frequency_dict(text)
-        huffman_coding_instance.make_heap(frequency)
+        frekvencija = huffman_coding_instance.recnik_frekvencija(text)
+        huffman_coding_instance.make_heap(frekvencija)
         huffman_coding_instance.merge_nodes()
-        huffman_coding_instance.make_codes()
-        encoded_text = huffman_coding_instance.get_encoded_text(text)
+        huffman_coding_instance.kodiranje()
+        enkodovani_tekst = huffman_coding_instance.get_enkodovani_tekst(text)
 
-    total_bits = len(encoded_text)
-    frequency = huffman_coding_instance.make_frequency_dict(encoded_text)
+    ukupan_broj_bita = len(enkodovani_tekst)
+    frekvencija = huffman_coding_instance.recnik_frekvencija(enkodovani_tekst)
 
-    entropy = 0
-    for count in frequency.values():
-        probability = count / total_bits
-        entropy -= probability * math.log2(probability)
+    entropija = 0
+    for count in frekvencija.values():
+        verovatnoca = count / ukupan_broj_bita
+        entropija += verovatnoca * math.log(1/verovatnoca,2)
 
-    return entropy
+    return entropija
 
-huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\text_compression\\TheLittlePrince.txt")
-entropy = calculate_entropy_huffman_coding(huffman_instance)
-print("Entropy of the Huffman encoding:", entropy)
+# funkcija za racunanje efikasnosti
 
-def calculate_compression_efficiency(original_size, compressed_size):
-    efficiency = (1 - compressed_size / original_size) * 100
-    return efficiency
+def racunanje_efikasnosti(originalna_velicina, kompresovana_velicina):
+    efikasnost = (1 - kompresovana_velicina / originalna_velicina) * 100
+    return efikasnost
 
-# Assuming you have a HuffmanCoding instance named huffman_instance
-huffman_instance = HuffmanCoding("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\text_compression\\TheLittlePrince.txt")
-original_size = os.path.getsize(huffman_instance.path) * 8  # Original size in bits
-compressed_size = os.path.getsize(huffman_instance.compress()) * 8  # Compressed size in bits
+# kompresija tekstualnog fajla
 
-efficiency = calculate_compression_efficiency(original_size, compressed_size)
-print("Compression efficiency:", efficiency, "%")
+# pre pokretanja programa potrebno je zameniti putanju do fajla 
+# sa stvarnom putanjom tekstualnog fajle koji se treba kompresovati
+
+fajl = HafmenovAlgoritam("C:\\Users\\Korisnik\\Documents\\ETF\\TIK\\huffman\\text_compression\\TheLittlePrince.txt")
+entropija = racunanje_entropije(fajl)
+print("Entropija:", entropija)
+
+originalna_velicina = os.path.getsize(fajl.path) * 8  # Velicina originalnog fajla u bitima
+kompresovana_velicina = os.path.getsize(fajl.kompresija()) * 8  # Velicina kompresovanog fajla u bitima
+
+efikasnost = racunanje_efikasnosti(originalna_velicina, kompresovana_velicina)
+print("Efikasnost kompresije:", efikasnost, "%")
 
 
